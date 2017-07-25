@@ -41,7 +41,7 @@ class FetchAmazonSkus extends Command
     public function handle()
     {
         $yesterdayNow = date("Y-m-d H:i:s", strtotime("-1 day"));
-//        $yesterdayNow = date("Y-m-d H:i:s", (time() - 60));
+        //        $yesterdayNow = date("Y-m-d H:i:s", (time() - 60));
 
         $product = AmazonSku::where('last_fetch', '<', $yesterdayNow)->first();
         if (!$product) {
@@ -53,6 +53,8 @@ class FetchAmazonSkus extends Command
         $info = $this->doFetch($product->sku);
         if (!$info) {
             echo "{$product->sku} fetch error.\n";
+
+            return false;
         }
 
         $product->title = $info['title'];
@@ -61,7 +63,7 @@ class FetchAmazonSkus extends Command
 
         AmazonPriceLog::create(['sku_id' => $product->id, 'price' => $info['price']]);
 
-        echo "{$info['title']} 在 " . date("Y-m-d H:i:s") . " 的价格是 {$info['price']}\n";
+        echo "{$info['title']} 在 ".date("Y-m-d H:i:s")." 的价格是 {$info['price']}\n";
 
         return true;
     }
