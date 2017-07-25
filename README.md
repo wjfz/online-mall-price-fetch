@@ -7,6 +7,7 @@
 
 ###先配置项目。
 
+* 执行`composer install`
 * 配置 .env 里的数据库信息
 * 执行 `php artisan migrate` 迁移数据
 
