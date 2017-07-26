@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\FetchAmazonSkus::class,
         Commands\AddAmazonSku::class,
+        Commands\AddSourceSku::class,
     ];
 
     /**
