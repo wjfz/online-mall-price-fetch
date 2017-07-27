@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\AmazonPriceLog;
 use App\AmazonSku;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class FetchAmazonSkus extends Command
@@ -21,7 +22,7 @@ class FetchAmazonSkus extends Command
      *
      * @var string
      */
-    protected $description = 'Fetch amazon production sku.';
+    protected $description = '从数据库获取亚马逊待抓列表，抓取亚马逊商品价格。';
 
     /**
      * Create a new command instance.
@@ -40,30 +41,58 @@ class FetchAmazonSkus extends Command
      */
     public function handle()
     {
-        $yesterdayNow = date("Y-m-d H:i:s", strtotime("-1 day"));
-        //        $yesterdayNow = date("Y-m-d H:i:s", (time() - 60));
+        $startTime = time();
 
-        $product = AmazonSku::where('last_fetch', '<', $yesterdayNow)->first();
-        if (!$product) {
+        $time = Carbon::now()->subHours(4)->toDateTimeString();
+        $time = Carbon::now()->toDateTimeString();
+
+        $products = (new AmazonSku)->where('last_fetch', '<', $time)->get();
+        if ($products->count() == 0) {
             echo date("Y-m-d H:i:s")." 没有要抓取的商品。\n";
 
             return true;
         }
 
-        $info = $this->doFetch($product->sku);
-        if (!$info) {
+        $failedCount  = 0;
+
+        foreach ($products as $product) {
+            $fetched = $this->fetch($product);
+            if ($fetched == false) {
+                $failedCount++;
+            }
+
+            if ($failedCount >= 3) {
+                echo "本次抓取失败达到3个，退出\n";
+                return false;
+            }
+
+            if ((time() - $startTime) >= 45) {
+                echo "本次抓取时长达到45秒，退出\n";
+                return true;
+            }
+
+            sleep(1);
+        }
+
+        return true;
+    }
+
+    private function fetch(AmazonSku $product)
+    {
+        $doFetched = $this->doFetch($product->sku);
+        if (!$doFetched) {
             echo "{$product->sku} fetch error.\n";
 
             return false;
         }
 
-        $product->title = $info['title'];
+        $product->title = $doFetched['title'];
         $product->count++;
         $product->save();
 
-        AmazonPriceLog::create(['sku_id' => $product->id, 'price' => $info['price']]);
+        (new AmazonPriceLog)->create(['sku_id' => $product->id, 'price' => $doFetched['price']]);
 
-        echo "{$info['title']} 在 ".date("Y-m-d H:i:s")." 的价格是 {$info['price']}\n";
+        echo "{$doFetched['title']} 在 ".date("Y-m-d H:i:s")." 的价格是 {$doFetched['price']}\n";
 
         return true;
     }
@@ -82,16 +111,17 @@ class FetchAmazonSkus extends Command
         $options = array(
             CURLOPT_URL => "https://www.amazon.cn/gp/cart/desktop/ajax-mini-detail.html?asin={$sku}&offeringsku={$sku}",
 
+            CURLOPT_TIMEOUT        => 5,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
-            CURLOPT_AUTOREFERER => false,
+            CURLOPT_AUTOREFERER    => false,
             CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_HEADER => false,
-            CURLOPT_COOKIE => 'x-wl-uid=1vvIrSlAr+SjgwBAcR3knqrA4dpdjgRWOkkfsAItUksYYMoGNm+MHIjj36cb/pTSvSAyBhcUQKds=; session-token=CQq7bKV6aBaejzXF3kmot2yTPh2murUmcoLqLvTuogI05LO6/6gWdbnxE4cEva35o+XKJUiqm7eKiCFKgHmiGcOaulGJkKsqspkfLLoLc+QO5oA1+Nl6oNSNFFLpzkMdSh+XYpLjU7bD6KMJKUs8gTpyrQHznl235oHnBTgQuJgqZlJtzcxWS1XMQZGc2240+kDp7njRptZIEC7XrNwh6mzpRLEG9Xo/77z7JJb5FHL9jJNUcU0YJQ==; ubid-acbcn=462-7911864-5676230; session-id-time=2082729601l; session-id=457-7603819-0986666',
-            CURLOPT_ENCODING => 'gzip, deflate, br',
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-            CURLOPT_HTTPHEADER => $header
+            CURLOPT_HEADER         => false,
+            CURLOPT_COOKIE         => 'x-wl-uid=1vvIrSlAr+SjgwBAcR3knqrA4dpdjgRWOkkfsAItUksYYMoGNm+MHIjj36cb/pTSvSAyBhcUQKds=; session-token=CQq7bKV6aBaejzXF3kmot2yTPh2murUmcoLqLvTuogI05LO6/6gWdbnxE4cEva35o+XKJUiqm7eKiCFKgHmiGcOaulGJkKsqspkfLLoLc+QO5oA1+Nl6oNSNFFLpzkMdSh+XYpLjU7bD6KMJKUs8gTpyrQHznl235oHnBTgQuJgqZlJtzcxWS1XMQZGc2240+kDp7njRptZIEC7XrNwh6mzpRLEG9Xo/77z7JJb5FHL9jJNUcU0YJQ==; ubid-acbcn=462-7911864-5676230; session-id-time=2082729601l; session-id=457-7603819-0986666',
+            CURLOPT_ENCODING       => 'gzip, deflate, br',
+            CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+            CURLOPT_HTTPHEADER     => $header
         );
         curl_setopt_array($ch, $options);
         $result = curl_exec($ch);
