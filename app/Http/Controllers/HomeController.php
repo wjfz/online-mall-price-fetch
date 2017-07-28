@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AmazonSku;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -24,5 +25,16 @@ class HomeController extends Controller
     public function index()
     {
         return view('home');
+    }
+
+    public function addAmazonSku($sku)
+    {
+        if (strlen($sku) != 10) {
+            echo "sku error.";
+        }
+
+        (new AmazonSku())->firstOrCreate(['sku' => $sku]);
+
+        return view('addAmazonSku')->with('sku', $sku);
     }
 }

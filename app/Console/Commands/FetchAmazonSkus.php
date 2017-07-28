@@ -44,7 +44,7 @@ class FetchAmazonSkus extends Command
         $startTime = time();
 
         $time = Carbon::now()->subHours(4)->toDateTimeString();
-        $time = Carbon::now()->toDateTimeString();
+//        $time = Carbon::now()->toDateTimeString();
 
         $products = (new AmazonSku)->where('last_fetch', '<', $time)->get();
         if ($products->count() == 0) {
