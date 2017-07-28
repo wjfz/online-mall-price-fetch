@@ -15,11 +15,12 @@ class CreateSkusTable extends Migration
     {
         Schema::create('skus', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('source', 16)->default('');
-            $table->string('sku', 16)->default('');
-            $table->string('title', 255)->default('');
-            $table->integer('count')->default(0);
-            $table->timestamp('last_fetch');
+            $table->string('source', 32)->default('')->comment('来源：jd|amazon');
+            $table->string('sku', 32)->default('');
+            $table->string('title', 128)->default('')->comment('商品标题');
+            $table->string('img', 512)->default('')->comment('商品图片');
+            $table->integer('count')->default(0)->comment('已抓取次数');
+            $table->timestamp('last_fetch')->comment('最后一次抓取时间');
             $table->timestamps();
             $table->unique(['source', 'sku']);
         });

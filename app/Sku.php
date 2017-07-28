@@ -4,7 +4,6 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\QueryException;
 
 class Sku extends Model
 {
@@ -24,10 +23,10 @@ class Sku extends Model
     protected $fillable = ['source', 'sku', 'last_fetch'];
 
     /**
-     * @param string $source
-     * @param string $sku
+     * @param $source
+     * @param $sku
      *
-     * @return Sku|bool
+     * @return bool|Model|Sku
      */
     public static function addSourceSku($source, $sku)
     {
@@ -36,18 +35,8 @@ class Sku extends Model
             'sku'        => $sku,
             'last_fetch' => Carbon::yesterday(),
         ];
-        $model = new self();
-        $model->fill($attributes);
-        try {
-            $saved = $model->save();
-        } catch (QueryException $exception) {
-            if ($exception->getCode() == 23000) {
-                $saved = true;
-            } else {
-                throw $exception;
-            }
-        }
+        $model = (new Sku)->firstOrCreate($attributes);
 
-        return $saved ? $model : false;
+        return $model ? $model : false;
     }
 }
