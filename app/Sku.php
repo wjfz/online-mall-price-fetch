@@ -68,7 +68,8 @@ class Sku extends Model
      */
     public function saveTitle($title)
     {
-        $this->title = $title;
+        $this->title      = $title;
+        $this->last_fetch = Carbon::now()->toDateTimeString();
         $this->count++;
 
         return $this->save();
