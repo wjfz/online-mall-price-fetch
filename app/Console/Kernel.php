@@ -26,8 +26,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+         $schedule->command(Commands\FetchAmazonSkus::class)->everyMinute()->withoutOverlapping()->appendOutputTo('/srv/laravel/storage/logs/amazon-fetch.log');
     }
 
     /**
