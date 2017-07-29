@@ -8,13 +8,28 @@
                 <div class="panel-heading">Dashboard</div>
 
                 <div class="panel-body">
-                    You are logged in!
+                    @if (!empty($sku))
+                        {{$sku}} add {{$result}}
+                    @endif
                 </div>
 
 
-                <form class="form-horizontal" action="{{ route('home') }}">
+                <form class="form-horizontal" method="POST" action="{{ route('addSku') }}">
+                    {{ csrf_field() }}
+
                     <div class="form-group">
-                        <label for="sku" class="col-md-4 control-label">Amazon Sku</label>
+                        <label for="source" class="col-md-4 control-label">网站</label>
+
+                        <div class="col-md-6">
+                            <select id="source" name="source" class="form-control" title="选择网站">
+                                @foreach ($sources as $source => $sourceRemark)
+                                    <option value="{{$source}}">{{$sourceRemark}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="sku" class="col-md-4 control-label">Sku</label>
 
                         <div class="col-md-6">
                             <input id="sku" class="form-control" name="sku" value="" required autofocus>
@@ -24,7 +39,7 @@
                     <div class="form-group">
                         <div class="col-md-8 col-md-offset-4">
                             <button class="btn btn-primary">
-                                Login
+                                添加
                             </button>
                         </div>
                     </div>

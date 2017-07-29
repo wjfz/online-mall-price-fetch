@@ -23,6 +23,12 @@ class Sku extends Model
     protected $guarded = [];
 
     const SOURCE_AMAZON = 'amazon';
+    const SOURCE_JD     = 'jd';
+
+    public static $sources = [
+        self::SOURCE_AMAZON => '亚马逊',
+        self::SOURCE_JD     => '京东',
+    ];
 
     /**
      * @param $source
@@ -35,7 +41,6 @@ class Sku extends Model
         $attributes = [
             'source'     => $source,
             'sku'        => $sku,
-            'last_fetch' => Carbon::yesterday(),
         ];
         $model = (new Sku)->firstOrCreate($attributes);
 

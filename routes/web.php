@@ -17,6 +17,7 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/home/{sku?}/{result?}', 'HomeController@index')->name('home');
 
 Route::get('/addAmazonSku/{sku}', 'HomeController@addAmazonSku')->name('addAmazonSku');
+Route::post('/addSku', 'HomeController@addSku')->name('addSku');

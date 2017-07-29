@@ -20,7 +20,7 @@ class CreateSkusTable extends Migration
             $table->string('title', 128)->default('')->comment('商品标题');
             $table->string('img', 512)->default('')->comment('商品图片');
             $table->integer('count')->default(0)->comment('已抓取次数');
-            $table->timestamp('last_fetch')->comment('最后一次抓取时间');
+            $table->timestamp('last_fetch')->default('2011-09-01 00:00:00')->comment('最后一次抓取时间');
             $table->timestamps();
             $table->unique(['source', 'sku']);
         });
