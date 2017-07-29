@@ -5,26 +5,26 @@
 
 # 使用姿势
 
-###先配置项目。
+### 先配置项目。
 
 * 执行`composer install`
 * 配置 .env 里的数据库信息
 * 执行 `php artisan migrate` 迁移数据
 
-### 两个命令
+### 添加sku（暂）
 
-`php artisan amazon:addSku B071XX5315` 添加亚马逊商品sku
+`php artisan skus:add {source} {sku}`
 
-`php artisan amazon:fetch` 执行抓取
+如：
+
+`skus:add amazon B071XX5315`
+
+
 
 ### 服务器配置
 添加到crontab
 
-    # 抓取亚马逊价格
-    * * * * * cd /srv/laravel && /usr/local/bin/php artisan amazon:fetch >> /home/wjfz/amazon-fetch.log
+    # Laravel任务调度
+    * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
 
-`/www/laravel` 你的项目路径
-
-`/usr/local/bin/php` 你的php路径
-
-`/home/wjfz/amazon-fetch.log` 你的crontab日志想放在哪里
+`/path/to/artisan` 你的项目artisan路径
