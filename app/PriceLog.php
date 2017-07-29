@@ -13,20 +13,19 @@ class PriceLog extends Model
      */
     protected $table = 'price_logs';
 
-
     /**
-     * 可以被批量赋值的属性。
+     * 不可被批量赋值的属性。
      *
      * @var array
      */
-    protected $fillable = ['sku_id', 'price'];
+    protected $guarded = [];
 
 
     /**
      * @param $skuID
      * @param $price
      *
-     * @return bool|Model|PriceLog
+     * @return $this|Model
      */
     public static function createSkuPrice($skuID, $price)
     {
@@ -35,8 +34,8 @@ class PriceLog extends Model
             'price'  => $price,
         ];
 
-        $model = (new self)->firstOrCreate($attributes);
+        $model = (new self)->create($attributes);
 
-        return $model ?: false;
+        return $model;
     }
 }

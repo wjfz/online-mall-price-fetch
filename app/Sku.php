@@ -16,11 +16,13 @@ class Sku extends Model
 
 
     /**
-     * 可以被批量赋值的属性。
+     * 不可被批量赋值的属性。
      *
      * @var array
      */
-    protected $fillable = ['source', 'sku', 'last_fetch'];
+    protected $guarded = [];
+
+    const SOURCE_AMAZON = 'amazon';
 
     /**
      * @param $source
@@ -38,5 +40,32 @@ class Sku extends Model
         $model = (new Sku)->firstOrCreate($attributes);
 
         return $model ? $model : false;
+    }
+
+    /**
+     * @param int $lastFetchHoursAgo 获取距上次抓取已经过去N小时的skus
+     *
+     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     */
+    public static function getNeedFetchAmazonSkus($lastFetchHoursAgo = 4)
+    {
+        $time = Carbon::now()->subHours($lastFetchHoursAgo)->toDateTimeString();
+
+        return (new Sku())->where('last_fetch', '<', $time)
+            ->where('source', self::SOURCE_AMAZON)
+            ->get();
+    }
+
+    /**
+     * @param $title
+     *
+     * @return bool
+     */
+    public function saveTitle($title)
+    {
+        $this->title = $title;
+        $this->count++;
+
+        return $this->save();
     }
 }

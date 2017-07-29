@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\AmazonPriceLog;
-use App\AmazonSku;
-use Carbon\Carbon;
+use App\PriceLog;
+use App\Sku;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class FetchAmazonSkus extends Command
 {
@@ -41,13 +41,10 @@ class FetchAmazonSkus extends Command
      */
     public function handle()
     {
-        $startTime = time();
+        // 取出待抓取的sku集合
+        $skus = Sku::getNeedFetchAmazonSkus();
 
-        $time = Carbon::now()->subHours(4)->toDateTimeString();
-//        $time = Carbon::now()->toDateTimeString();
-
-        $products = (new AmazonSku)->where('last_fetch', '<', $time)->get();
-        if ($products->count() == 0) {
+        if ($skus->count() == 0) {
             echo date("Y-m-d H:i:s")." 没有要抓取的商品。\n";
 
             return true;
@@ -55,8 +52,9 @@ class FetchAmazonSkus extends Command
 
         $failedCount  = 0;
 
-        foreach ($products as $product) {
-            $fetched = $this->fetch($product);
+        foreach ($skus as $sku) {
+            // 单个sku对象传入抓取方法
+            $fetched = $this->fetchAndSaveLog($sku);
             if ($fetched == false) {
                 $failedCount++;
             }
@@ -66,37 +64,53 @@ class FetchAmazonSkus extends Command
                 return false;
             }
 
-            if ((time() - $startTime) >= 45) {
-                echo "本次抓取时长达到45秒，退出\n";
-                return true;
-            }
-
+            // sleep一秒再请求，防屏蔽
             sleep(1);
         }
 
         return true;
     }
 
-    private function fetch(AmazonSku $product)
+    /**
+     * @param Sku $sku
+     *
+     * @return bool
+     */
+    private function fetchAndSaveLog(Sku $sku)
     {
-        $doFetched = $this->doFetch($product->sku);
+        $doFetched = $this->doFetch($sku->sku);
         if (!$doFetched) {
-            echo "{$product->sku} fetch error.\n";
+            echo "{$sku->sku} fetch error.\n";
 
             return false;
         }
 
-        $product->title = $doFetched['title'];
-        $product->count++;
-        $product->save();
+        $newTitle = $doFetched['title'];
+        $newPrice = $doFetched['price'];
 
-        (new AmazonPriceLog)->create(['sku_id' => $product->id, 'price' => $doFetched['price']]);
+        // 一些基础信息更进sku表
+        $sku->saveTitle($newTitle);
 
-        echo "{$doFetched['title']} 在 ".date("Y-m-d H:i:s")." 的价格是 {$doFetched['price']}\n";
+        // 价格更进log表
+        $cacheKey = $sku->source.$sku->sku;
+        $lastPrice = Cache::get($cacheKey, 0);
+        if ($newPrice != $lastPrice) {
+            // 如果价格产生变化，插入数据库，写入缓存
+            (new PriceLog())->createSkuPrice($sku->id, $newPrice);
+
+            Cache::put($cacheKey, $newPrice, 86400);
+        }
+
+        echo "{$newTitle} 在 ".date("Y-m-d H:i:s")." 的价格是 {$newPrice}\n";
 
         return true;
     }
 
+    /**
+     * @param $sku
+     *
+     * @return array|bool
+     */
     private function doFetch($sku)
     {
         $header[] = "Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
