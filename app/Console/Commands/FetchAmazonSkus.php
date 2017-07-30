@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\PriceReduce;
 use App\PriceLog;
 use App\Sku;
 use Illuminate\Console\Command;
@@ -99,6 +100,10 @@ class FetchAmazonSkus extends Command
             (new PriceLog())->createSkuPrice($sku->id, $newPrice);
 
             Cache::put($cacheKey, $newPrice, 86400);
+        }
+
+        if ($newPrice < $lastPrice) {
+            event(new PriceReduce($sku->sku, $newTitle, $lastPrice, $newPrice));
         }
 
         echo "{$newTitle} 在 ".date("Y-m-d H:i:s")." 的价格是 {$newPrice}\n";
