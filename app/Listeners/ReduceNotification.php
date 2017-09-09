@@ -93,6 +93,7 @@ class ReduceNotification implements ShouldQueue
         $arr = json_decode($result, true);
         if (!isset($arr['errcode']) || $arr['errcode'] != 0) {
             exec("echo {$sku} {$title} {$oldPrice} {$newPrice} send failed {$result} >> /srv/laravel/storage/logs/test.log");
+            throw new \Exception("微信发送失败 result:".json_encode($arr, JSON_UNESCAPED_UNICODE));
         }
 
         return true;

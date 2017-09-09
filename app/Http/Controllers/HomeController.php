@@ -34,17 +34,6 @@ class HomeController extends Controller
         return view('home')->with($data);
     }
 
-    public function addAmazonSku($sku)
-    {
-        if (strlen($sku) != 10) {
-            echo "sku error.";
-        }
-
-        (new AmazonSku())->firstOrCreate(['sku' => $sku]);
-
-        return view('addAmazonSku')->with('sku', $sku);
-    }
-
     public function addSku(Request $request)
     {
         $source = $request->input('source');
