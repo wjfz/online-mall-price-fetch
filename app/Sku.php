@@ -58,6 +58,21 @@ class Sku extends Model
 
         return (new Sku())->where('last_fetch', '<', $time)
             ->where('source', self::SOURCE_AMAZON)
+            ->limit(39)
+            ->get();
+    }
+
+    /**
+     * 获取抓取次数小于2次的sku，以此去获得这些sku的推荐商品
+     *
+     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     */
+    public static function getNeverFetchedAmazonSkus()
+    {
+        return (new Sku())->where('count', '<', 2)
+            ->where('source', self::SOURCE_AMAZON)
+            ->orderByRaw('RAND()')
+            ->limit(15)
             ->get();
     }
 

@@ -99,7 +99,7 @@ class FetchAmazonSkus extends Command
             // 如果价格产生变化，插入数据库，写入缓存
             (new PriceLog())->createSkuPrice($sku->id, $newPrice);
 
-            Cache::put($cacheKey, $newPrice, 86400);
+            Cache::put($cacheKey, $newPrice, 1440);
         }
 
         if ($newPrice < $lastPrice) {
@@ -148,15 +148,18 @@ class FetchAmazonSkus extends Command
 
         preg_match('|<span class="a-size-medium sc-product-title">
 (.*)</span>|', $result, $title);
-        //        var_dump($title);
 
         preg_match('|<span class="a-size-medium a-color-price sc-price">￥ (.*)</span>|', $result, $price);
-        //        var_dump($price);
 
         if (isset($title[1]) && isset($price[1])) {
             return [
                 'title' => html_entity_decode($title[1]),
                 'price' => $price[1],
+            ];
+        } elseif (isset($title[1]) && strpos($result,"目前无货")) {
+            return [
+                'title' => html_entity_decode($title[1]),
+                'price' => 0,
             ];
         } else {
             return false;

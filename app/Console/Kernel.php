@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\FetchAmazonSkus::class,
         Commands\AddSourceSku::class,
+        Commands\AmazonSkuSpider::class,
     ];
 
     /**
@@ -26,6 +27,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
          $schedule->command(Commands\FetchAmazonSkus::class)->everyMinute()->withoutOverlapping()->appendOutputTo('/srv/laravel/storage/logs/amazon-fetch.log');
+         $schedule->command(Commands\AmazonSkuSpider::class)->everyMinute()->withoutOverlapping()->appendOutputTo('/srv/laravel/storage/logs/amazon-sku-spider.log');
     }
 
     /**
