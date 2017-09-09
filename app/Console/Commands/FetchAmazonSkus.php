@@ -106,7 +106,7 @@ class FetchAmazonSkus extends Command
             event(new PriceReduce($sku->sku, $newTitle, $lastPrice, $newPrice));
         }
 
-        echo "{$newTitle} 在 ".date("Y-m-d H:i:s")." 的价格是 {$newPrice}\n";
+        echo "{$newTitle} 在 ".date("Y-m-d H:i:s")." 的价格是 {$newPrice} oldPrice:{$lastPrice}\n";
 
         return true;
     }

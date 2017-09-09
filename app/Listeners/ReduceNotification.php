@@ -41,7 +41,7 @@ class ReduceNotification implements ShouldQueue
             $tokenArr = json_decode($tokenJson, true);
             if (isset($tokenArr['access_token'])) {
                 $token = $tokenArr['access_token'];
-                Cache::put('WechatSystemToken', $token, 3600);
+                Cache::put('WechatSystemToken', $token, 60);
             } else {
                 exec("echo {$sku} {$title} {$oldPrice} {$newPrice} token failed {$tokenJson} >> /srv/laravel/storage/logs/test.log");
                 return false;
@@ -92,7 +92,7 @@ class ReduceNotification implements ShouldQueue
 
         $arr = json_decode($result, true);
         if (!isset($arr['errcode']) || $arr['errcode'] != 0) {
-            exec("echo {$sku} {$title} {$oldPrice} {$newPrice} token failed {$result} >> /srv/laravel/storage/logs/test.log");
+            exec("echo {$sku} {$title} {$oldPrice} {$newPrice} send failed {$result} >> /srv/laravel/storage/logs/test.log");
         }
 
         return true;
