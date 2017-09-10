@@ -48,6 +48,18 @@ class Sku extends Model
     }
 
     /**
+     *
+     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     */
+    public static function getFetchCount0AmazonSkus()
+    {
+        return (new Sku())->where('count', '=', 0)
+            ->where('source', self::SOURCE_AMAZON)
+            ->limit(39)
+            ->get();
+    }
+
+    /**
      * @param int $lastFetchHoursAgo 获取距上次抓取已经过去N小时的skus
      *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
@@ -78,13 +90,14 @@ class Sku extends Model
 
     /**
      * @param $title
+     * @param bool $hasRate
      *
      * @return bool
      */
-    public function saveTitle($title)
+    public function saveTitle($title, $hasRate = true)
     {
         $this->title      = $title;
-        $this->last_fetch = Carbon::now()->toDateTimeString();
+        $this->last_fetch = $hasRate ? Carbon::now()->toDateTimeString() : Carbon::now()->addMonth(2)->toDateTimeString();
         $this->count++;
 
         return $this->save();

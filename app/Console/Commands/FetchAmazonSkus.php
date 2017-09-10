@@ -43,7 +43,10 @@ class FetchAmazonSkus extends Command
     public function handle()
     {
         // 取出待抓取的sku集合
-        $skus = Sku::getNeedFetchAmazonSkus();
+        $skus = Sku::getFetchCount0AmazonSkus();
+        if (empty($skus)) {
+            $skus = Sku::getNeedFetchAmazonSkus();
+        }
 
         if ($skus->count() == 0) {
             echo date("Y-m-d H:i:s")." 没有要抓取的商品。\n";
@@ -88,9 +91,10 @@ class FetchAmazonSkus extends Command
 
         $newTitle = $doFetched['title'];
         $newPrice = $doFetched['price'];
+        $hasRate  = $doFetched['hasRate'];
 
         // 一些基础信息更进sku表
-        $sku->saveTitle($newTitle);
+        $sku->saveTitle($newTitle, $hasRate);
 
         // 价格更进log表
         $cacheKey = $sku->source.$sku->sku;
@@ -151,15 +155,28 @@ class FetchAmazonSkus extends Command
 
         preg_match('|<span class="a-size-medium a-color-price sc-price">￥ (.*)</span>|', $result, $price);
 
+        preg_match('|共 (.*) 人评分|', $result, $rate);
+        var_dump($rate);
+
+        $hasRate = (!empty($rate)) ? true : false;
+        var_dump($hasRate);
         if (isset($title[1]) && isset($price[1])) {
             return [
-                'title' => html_entity_decode($title[1]),
-                'price' => $price[1],
+                'title'   => html_entity_decode($title[1]),
+                'price'   => $price[1],
+                'hasRate' => $hasRate,
             ];
         } elseif (isset($title[1]) && strpos($result,"目前无货")) {
             return [
-                'title' => html_entity_decode($title[1]),
-                'price' => 0,
+                'title'   => html_entity_decode($title[1]),
+                'price'   => 0,
+                'hasRate' => $hasRate,
+            ];
+        } elseif (isset($title[1]) && strpos($result,"a-spacing-base")) {
+            return [
+                'title'   => html_entity_decode($title[1]),
+                'price'   => 0,
+                'hasRate' => $hasRate,
             ];
         } else {
             return false;
