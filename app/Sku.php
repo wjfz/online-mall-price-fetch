@@ -55,7 +55,8 @@ class Sku extends Model
     {
         return (new Sku())->where('count', '=', 0)
             ->where('source', self::SOURCE_AMAZON)
-            ->limit(39)
+            ->orderBy('id')
+            ->limit(69)
             ->get();
     }
 
@@ -70,7 +71,7 @@ class Sku extends Model
 
         return (new Sku())->where('last_fetch', '<', $time)
             ->where('source', self::SOURCE_AMAZON)
-            ->limit(39)
+            ->limit(69)
             ->get();
     }
 
@@ -90,14 +91,21 @@ class Sku extends Model
 
     /**
      * @param $title
-     * @param bool $hasRate
+     * @param $rate
      *
      * @return bool
      */
-    public function saveTitle($title, $hasRate = true)
+    public function saveTitle($title, $rate)
     {
+        if ($rate > 50) {
+            $lastFetch = Carbon::now()->toDateTimeString();
+        } else {
+            $lastFetch = Carbon::now()->addMonth(2)->toDateTimeString();
+        }
+
         $this->title      = $title;
-        $this->last_fetch = $hasRate ? Carbon::now()->toDateTimeString() : Carbon::now()->addMonth(2)->toDateTimeString();
+        $this->rate       = $rate;
+        $this->last_fetch = $lastFetch;
         $this->count++;
 
         return $this->save();

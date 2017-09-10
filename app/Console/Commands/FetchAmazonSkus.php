@@ -68,8 +68,8 @@ class FetchAmazonSkus extends Command
                 return false;
             }
 
-            // sleep一秒再请求，防屏蔽
-            sleep(1);
+            // sleep 0.5秒再请求，防屏蔽
+            usleep(500000);
         }
 
         return true;
@@ -91,10 +91,10 @@ class FetchAmazonSkus extends Command
 
         $newTitle = $doFetched['title'];
         $newPrice = $doFetched['price'];
-        $hasRate  = $doFetched['hasRate'];
+        $rate     = $doFetched['rate'];
 
         // 一些基础信息更进sku表
-        $sku->saveTitle($newTitle, $hasRate);
+        $sku->saveTitle($newTitle, $rate);
 
         // 价格更进log表
         $cacheKey = $sku->source.$sku->sku;
@@ -110,7 +110,7 @@ class FetchAmazonSkus extends Command
             event(new PriceReduce($sku->sku, $newTitle, $lastPrice, $newPrice));
         }
 
-        echo "{$newTitle} 在 ".date("Y-m-d H:i:s")." 的价格是 {$newPrice} oldPrice:{$lastPrice}\n";
+        echo date("Y-m-d H:i:s")." {$sku->sku} newPrice:{$newPrice} oldPrice:{$lastPrice} rate:{$rate} title:{$newTitle}  {$sku->id}\n";
 
         return true;
     }
@@ -155,28 +155,31 @@ class FetchAmazonSkus extends Command
 
         preg_match('|<span class="a-size-medium a-color-price sc-price">￥ (.*)</span>|', $result, $price);
 
-        preg_match('|共 (.*) 人评分|', $result, $rate);
-        var_dump($rate);
+        preg_match('|共 (.*) 人评分|', $result, $rateArr);
 
-        $hasRate = (!empty($rate)) ? true : false;
-        var_dump($hasRate);
+        if (isset($rateArr[1])) {
+            $rate = intval($rateArr[1]);
+        } else {
+            $rate = 0;
+        }
+
         if (isset($title[1]) && isset($price[1])) {
             return [
-                'title'   => html_entity_decode($title[1]),
-                'price'   => $price[1],
-                'hasRate' => $hasRate,
+                'title' => html_entity_decode($title[1]),
+                'price' => $price[1],
+                'rate'  => $rate,
             ];
         } elseif (isset($title[1]) && strpos($result,"目前无货")) {
             return [
-                'title'   => html_entity_decode($title[1]),
-                'price'   => 0,
-                'hasRate' => $hasRate,
+                'title' => html_entity_decode($title[1]),
+                'price' => 0,
+                'rate'  => $rate,
             ];
         } elseif (isset($title[1]) && strpos($result,"a-spacing-base")) {
             return [
-                'title'   => html_entity_decode($title[1]),
-                'price'   => 0,
-                'hasRate' => $hasRate,
+                'title' => html_entity_decode($title[1]),
+                'price' => 0,
+                'rate'  => $rate,
             ];
         } else {
             return false;
