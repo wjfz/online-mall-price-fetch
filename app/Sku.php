@@ -71,6 +71,7 @@ class Sku extends Model
 
         return (new Sku())->where('last_fetch', '<', $time)
             ->where('source', self::SOURCE_AMAZON)
+            ->orderBy('id')
             ->limit(100)
             ->get();
     }
@@ -82,8 +83,7 @@ class Sku extends Model
      */
     public static function getNeverFetchedAmazonSkus()
     {
-        return (new Sku())->where('count', '<', 2)
-            ->where('source', self::SOURCE_AMAZON)
+        return (new Sku())->where('source', self::SOURCE_AMAZON)
             ->orderByRaw('RAND()')
             ->limit(15)
             ->get();
@@ -98,10 +98,15 @@ class Sku extends Model
      */
     public function saveInfo($title, $rate, $img)
     {
-        if ($rate > 50) {
-            $lastFetch = Carbon::now()->toDateTimeString();
-        } else {
+        if ($rate < 10) {
+            // 少于10个人评论的随机好几个月后再抓取
             $lastFetch = Carbon::now()->addMonth(rand(1,3))->addDays(rand(1,30))->toDateTimeString();
+        } elseif ($rate < 30) {
+            // 10到30个人评论的随机1-10天后再抓取
+            $lastFetch = Carbon::now()->addDays(rand(1,10))->toDateTimeString();
+        } else {
+            // 大于30个人的，四小时后再抓取
+            $lastFetch = Carbon::now()->toDateTimeString();
         }
 
         $data = [

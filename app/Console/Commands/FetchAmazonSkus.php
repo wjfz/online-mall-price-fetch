@@ -47,7 +47,7 @@ class FetchAmazonSkus extends Command
         do {
             // 取出待抓取的sku集合
             $skus = Sku::getFetchCount0AmazonSkus();
-            if (empty($skus)) {
+            if ($skus->count() == 0) {
                 $skus = Sku::getNeedFetchAmazonSkus();
             }
 
@@ -156,44 +156,46 @@ class FetchAmazonSkus extends Command
         $returnData = [];
 
         $result = json_decode($result, true);
-        foreach ($result['data'] as $item) {
-            $item = html_entity_decode($item);
+        if (!empty($result['data'])) {
+            foreach ($result['data'] as $item) {
+                $item = html_entity_decode($item);
 
-            $title = '';
-            $img   = '';
-            $price = 0;
-            $rate  = 0;
+                $title = '';
+                $img   = '';
+                $price = 0;
+                $rate  = 0;
 
-            preg_match('|alt="(.*)"|U', $item, $titleArr);
-            preg_match('|<span class=\'p13n-sc-price\'>￥(.*)</span>|U', $item, $priceArr);
-            preg_match('|data-a-dynamic-image="{"(.*)"|U', $item, $imgArr);
-            preg_match('|<a class="a-size-small a-link-normal" href="/product-reviews/.*">(.*)</a>|U', $item, $rateArr);
-            preg_match('|"asin":"(.*)"|U', $item, $skuArr);
+                preg_match('|alt="(.*)"|U', $item, $titleArr);
+                preg_match('|<span class=\'p13n-sc-price\'>￥(.*)</span>|U', $item, $priceArr);
+                preg_match('|data-a-dynamic-image="{"(.*)"|U', $item, $imgArr);
+                preg_match('|<a class="a-size-small a-link-normal" href="/product-reviews/.*">(.*)</a>|U', $item, $rateArr);
+                preg_match('|"asin":"(.*)"|U', $item, $skuArr);
 
-            if (isset($skuArr[1])) {
-                $sku = $skuArr[1];
-            }
-            if (isset($titleArr[1])) {
-                $title = $titleArr[1];
-            }
-            if (isset($imgArr[1])) {
-                $img = $imgArr[1];
-            }
-            if (isset($priceArr[1])) {
-                $price = $priceArr[1];
-            }
-            if (isset($rateArr[1])) {
-                $rate = $rateArr[1];
-            }
+                if (isset($skuArr[1])) {
+                    $sku = $skuArr[1];
+                }
+                if (isset($titleArr[1])) {
+                    $title = $titleArr[1];
+                }
+                if (isset($imgArr[1])) {
+                    $img = $imgArr[1];
+                }
+                if (isset($priceArr[1])) {
+                    $price = $priceArr[1];
+                }
+                if (isset($rateArr[1])) {
+                    $rate = $rateArr[1];
+                }
 
-            if (!empty($sku)) {
-                $data = [
-                    'title' => $title,
-                    'img'   => $img,
-                    'price' => $price,
-                    'rate'  => $rate,
-                ];
-                $returnData[$sku] = $data;
+                if (!empty($sku)) {
+                    $data = [
+                        'title' => $title,
+                        'img'   => $img,
+                        'price' => $price,
+                        'rate'  => $rate,
+                    ];
+                    $returnData[$sku] = $data;
+                }
             }
         }
 

@@ -32,6 +32,9 @@ class ReduceNotification implements ShouldQueue
         $title    = $event->title;
         $oldPrice = $event->oldPrice;
         $newPrice = $event->newPrice;
+        exec("echo 暂停发送通知 >> /srv/laravel/storage/logs/test.log");
+
+        return false;
 
 
         $token = Cache::get('WechatSystemToken');
